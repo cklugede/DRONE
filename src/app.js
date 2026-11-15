@@ -1065,7 +1065,9 @@ function renderBassSection() {
 }
 
 function renderDrumSection() {
-  els.drumKitTag.textContent = state.drums.tone.kitModel || 'Analog Dub Kit';
+  if (els.drumKitTag) {
+    els.drumKitTag.textContent = state.drums.tone.kitModel || 'Analog Dub Kit';
+  }
 
   els.drumPresetPills.innerHTML = DRUM_SOUND_PRESETS.map(
     (p) =>

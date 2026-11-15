@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DRONE</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Sticky Full-Width Top Transport & Global Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="status-led" id="statusLed" aria-hidden="true"></span>
+        <h1>DRONE</h1>
+      </div>
+
+      <div class="transport-group">
+        <button id="playBtn" class="btn btn-primary" title="Play / Stop (Space)">
+          <span id="playLabel">Play</span>
+        </button>
+        <div class="btn-group">
+          <button id="undoBtn" class="btn btn-xs btn-icon-text" title="Undo (Ctrl/Cmd+Z)" disabled>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 3L1.5 5.5L4 8"/><path d="M2 5.5H7.5a2.5 2.5 0 0 1 0 5H5.5"/></svg>
+            <span>Undo</span>
+          </button>
+          <button id="redoBtn" class="btn btn-xs btn-icon-text" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>
+            <span>Redo</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 3L10.5 5.5L8 8"/><path d="M10 5.5H4.5a2.5 2.5 0 0 0 0 5H6.5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="global-params">
+        <label class="compact-field">
+          <span>BPM</span>
+          <input id="bpmInput" type="number" min="60" max="180" value="126" />
+        </label>
+        <label class="compact-field">
+          <span>Swing</span>
+          <div class="range-inline">
+            <input id="swingInput" type="range" min="0" max="75" value="12" />
+            <span id="swingValue" class="mono-val">12%</span>
+          </div>
+        </label>
+        <label class="compact-field compact-select-field">
+          <span>Steps</span>
+          <select id="stepCountSelect">
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="32">32</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="export-group">
+        <button id="saveStateBtn" class="btn btn-xs" title="Save project JSON">Save</button>
+        <button id="loadStateBtn" class="btn btn-xs" title="Load project JSON">Load</button>
+        <input id="loadFileInput" type="file" accept=".json,application/json" hidden />
+        <label class="compact-field compact-select-field" title="Loops to export">
+          <select id="exportLoopsSelect">
+            <option value="1">1&times; Loop</option>
+            <option value="2" selected>2&times; Loops</option>
+            <option value="4">4&times; Loops</option>
+          </select>
+        </label>
+        <button id="exportMidiBtn" class="btn btn-xs btn-export">.MID</button>
+        <button id="exportWavBtn" class="btn btn-xs btn-export">.WAV</button>
+        <button id="exportStemsBtn" class="btn btn-xs btn-export">Stems .ZIP</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <!-- MODULE 01: DUB CONSOLE MIXER -->
+    <section class="module-shell module-mixer" aria-label="Mixer Module">
+      <div class="module-banner">
+        <div class="module-badge">
+          <span class="module-num">01</span>
+          <span class="module-title">Mixer</span>
+        </div>
+      </div>
+
+      <div class="mixer-console" id="mixerConsole"></div>
+    </section>
+
+    <!-- MODULE 02: DUB DELAY & REVERB FX -->
+    <section class="module-shell module-fx" aria-label="Dub FX Module">
+      <div class="module-banner">
+        <div class="module-badge">
+          <span class="module-num">02</span>
+          <span class="module-title">FX</span>
+        </div>
+        <div class="module-banner-controls">
+          <div class="sound-presets" id="fxPresetPills"></div>
+        </div>
+      </div>
+
+      <div class="fx-grid" id="fxParamGrid"></div>
+    </section>
+
+    <!-- MODULE 03: CHORDS, INTERVALS, SEQUENCE & SYNTH -->
+    <section class="module-shell module-chords" aria-label="Chord Module">
+      <div class="module-banner">
+        <div class="module-badge">
+          <span class="module-num">03</span>
+          <span class="module-title">Chord</span>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <section class="panel" aria-labelledby="chordHeading">
+          <div class="panel-header">
+            <h2 id="chordHeading">Chord</h2>
+            <div class="chord-readout" id="chordReadout">
+              <span class="chord-symbol" id="chordSymbol">Fm9</span>
+              <span class="chord-notes mono-val" id="chordNotesList">F3 G#3 C4 D#4 G4</span>
+            </div>
+          </div>
+
+          <div class="chord-controls-row">
+            <div class="control-block">
+              <span class="field-label">Root</span>
+              <div class="pill-grid root-grid" id="rootGrid"></div>
+            </div>
+            <div class="control-block small-controls">
+              <label class="stacked-field">
+                <span class="field-label">Octave</span>
+                <select id="octaveSelect">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3" selected>3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+              </label>
+              <label class="stacked-field">
+                <span class="field-label">Voicing</span>
+                <select id="voicingSelect"></select>
+              </label>
+              <label class="stacked-field">
+                <span class="field-label">Inversion</span>
+                <select id="inversionSelect">
+                  <option value="0">Root</option>
+                  <option value="1">1st</option>
+                  <option value="2">2nd</option>
+                  <option value="3">3rd</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-block">
+            <span class="field-label">Chord Quality</span>
+            <div class="pill-grid quality-grid" id="chordPresetGrid"></div>
+          </div>
+
+          <div class="control-block">
+            <span class="field-label">Voicing Keyboard</span>
+            <div class="mini-keyboard" id="miniKeyboard" role="group" aria-label="Chord voicing keyboard"></div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="intervalHeading">
+          <div class="panel-header">
+            <h2 id="intervalHeading" style="padding-top: 7px;">Intervals</h2>
+          </div>
+
+          <div class="control-block">
+            <div class="label-row">
+              <span class="field-label">Chord Interval Stack</span>
+              <button id="resetIntervalsBtn" class="btn-link">Reset</button>
+            </div>
+            <div class="pill-grid interval-stack-grid" id="chordIntervalGrid"></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="control-block">
+            <div class="label-row">
+              <span class="field-label">Sequence Interval Pool</span>
+              <div class="pool-header-controls">
+                <button id="poolEnabledBtn" class="btn btn-xs btn-toggle" aria-pressed="true">Pool On</button>
+                <label class="inline-select">
+                  <span>Scale</span>
+                  <select id="scaleSelect"></select>
+                </label>
+              </div>
+            </div>
+            <div id="intervalPoolBlock">
+              <div class="pill-grid pool-grid" id="intervalPoolGrid"></div>
+              <div class="pool-actions">
+                <button id="applyPoolBtn" class="btn btn-xs">Apply Pool to Steps</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel sequence-panel" aria-labelledby="seqHeading">
+        <div class="seq-toolbar">
+          <div class="seq-title-group">
+            <h2 id="seqHeading">Chord Sequence</h2>
+            <div class="style-pills" id="stylePills"></div>
+          </div>
+
+          <div class="seq-gen-controls">
+            <label class="compact-field" id="pulsesField">
+              <span>Pulses</span>
+              <input id="pulsesInput" type="number" min="1" max="32" value="5" />
+            </label>
+            <label class="compact-field">
+              <span>Rotate</span>
+              <input id="rotationInput" type="number" min="0" max="31" value="0" />
+            </label>
+            <button id="generateBtn" class="btn btn-secondary">Generate</button>
+            <div class="btn-group">
+              <button id="shiftLeftBtn" class="btn btn-xs" title="Shift left">&lt;</button>
+              <button id="shiftRightBtn" class="btn btn-xs" title="Shift right">&gt;</button>
+            </div>
+            <button id="clearSeqBtn" class="btn btn-xs btn-danger-ghost">Clear</button>
+          </div>
+        </div>
+
+        <div class="step-legend">
+          <span>Step</span>
+          <span>Vel</span>
+          <span>Note</span>
+          <span>Gate</span>
+        </div>
+        <div class="step-grid" id="stepGrid"></div>
+      </section>
+
+      <section class="panel synth-panel" aria-labelledby="synthHeading">
+        <div class="synth-header">
+          <div class="synth-title-row">
+            <h2 id="synthHeading">Chord Synth</h2>
+            <div class="sound-presets" id="soundPresetPills"></div>
+          </div>
+        </div>
+
+        <div class="synth-grid" id="chordSynthGrid"></div>
+      </section>
+    </section>
+
+    <!-- MODULE 04: MINIMAL DUB DRUM MACHINE -->
+    <section class="module-shell module-drums" aria-label="Drum Module">
+      <div class="module-banner">
+        <div class="module-badge">
+          <span class="module-num">04</span>
+          <span class="module-title">Drums</span>
+          <span class="kit-tag mono-val" id="drumKitTag">Tape 909/Dub</span>
+        </div>
+        <div class="module-banner-controls">
+          <div class="sound-presets" id="drumPresetPills"></div>
+          <button id="initDrumsBtn" class="btn btn-xs">4/4 Init</button>
+          <button id="clearDrumsBtn" class="btn btn-xs btn-danger-ghost">Clear</button>
+        </div>
+      </div>
+
+      <div class="drum-grid" id="drumGrid"></div>
+    </section>
+
+    <!-- MODULE 05: MINIMAL BASS SYNTH & SEQUENCER -->
+    <section class="module-shell module-bass" aria-label="Bass Module">
+      <div class="module-banner">
+        <div class="module-badge">
+          <span class="module-num">05</span>
+          <span class="module-title">Bass</span>
+        </div>
+        <div class="module-banner-controls">
+          <div class="sound-presets" id="bassPresetPills"></div>
+          <label class="compact-field">
+            <span>Oct</span>
+            <select id="bassOctaveSelect">
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+            </select>
+          </label>
+          <button id="generateBassBtn" class="btn btn-xs">Generate</button>
+          <button id="clearBassBtn" class="btn btn-xs btn-danger-ghost">Clear</button>
+        </div>
+      </div>
+
+      <div class="bass-sound-grid" id="bassSoundGrid"></div>
+
+      <div class="bass-grid" id="bassGrid"></div>
+    </section>
+  </div>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
